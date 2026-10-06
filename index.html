@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PulseDesk - 智慧專注與健康管理儀表板</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.35);
+      --break-color: #34d399;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 15px;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    header h1 {
+      font-size: 2.2rem;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+    header p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      max-width: 900px;
+      width: 100%;
+    }
+    @media (min-width: 768px) {
+      .container {
+        grid-template-columns: 1.2fr 0.8fr;
+      }
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    /* 番茄鐘圓形區塊 */
+    .timer-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .mode-switch {
+      display: flex;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 4px;
+      border-radius: 30px;
+      margin-bottom: 20px;
+    }
+    .mode-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 8px 18px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+    .mode-btn.active {
+      background: var(--accent);
+      color: #0f172a;
+    }
+    .circle-wrap {
+      position: relative;
+      width: 230px;
+      height: 230px;
+      margin: 10px 0;
+    }
+    .circle-wrap svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+    .circle-bg {
+      fill: none;
+      stroke: #334155;
+      stroke-width: 10;
+    }
+    .circle-progress {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke-dasharray: 628;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 0.4s linear;
+      filter: drop-shadow(0 0 6px var(--accent-glow));
+    }
+    .time-display {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 3rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .btn {
+      border: none;
+      padding: 10px 24px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #0f172a;
+    }
+    .btn-primary:hover {
+      box-shadow: 0 0 15px var(--accent-glow);
+      transform: translateY(-2px);
+    }
+    .btn-secondary {
+      background: #334155;
+      color: var(--text-main);
+    }
+    .btn-secondary:hover {
+      background: #475569;
+    }
+    /* 任務輸入與列表 */
+    .task-input-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+    .task-input-group input {
+      flex: 1;
+      padding: 10px 14px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      color: #fff;
+      outline: none;
+    }
+    .task-input-group input:focus {
+      border-color: var(--accent);
+    }
+    .task-list {
+      list-style: none;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .task-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0f172a;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      border-left: 4px solid var(--accent);
+      font-size: 0.95rem;
+    }
+    /* 護眼與健康提醒卡片 */
+    .health-tip {
+      background: rgba(56, 189, 248, 0.1);
+      border-left: 4px solid var(--accent);
+      padding: 14px;
+      border-radius: 8px;
+      margin-top: 15px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .stats-row {
+      display: flex;
+      justify-content: space-around;
+      text-align: center;
+      margin-top: 15px;
+    }
+    .stat-number {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>PulseDesk 專注儀表板</h1>
+    <p>智慧番茄工作法 × 工程師肩頸與眼部保健系統</p>
+  </header>
+
+  <div class="container">
+    <!-- 左側：番茄鐘核心操作區 -->
+    <div class="card timer-container">
+      <div class="mode-switch">
+        <button class="mode-btn active" id="workModeBtn" onclick="setMode('work')">專注 (25m)</button>
+        <button class="mode-btn" id="breakModeBtn" onclick="setMode('break')">短休息 (5m)</button>
+      </div>
+
+      <div class="circle-wrap">
+        <svg>
+          <circle class="circle-bg" cx="115" cy="115" r="100"></circle>
+          <circle class="circle-progress" id="progressRing" cx="115" cy="115" r="100"></circle>
+        </svg>
+        <div class="time-display" id="timerDisplay">25:00</div>
+      </div>
+
+      <div class="controls">
+        <button class="btn btn-primary" id="startBtn" onclick="toggleTimer()">開始專注</button>
+        <button class="btn btn-secondary" onclick="resetTimer()">重設</button>
+      </div>
+
+      <div class="health-tip" id="healthTipBox">
+        💡 <strong>健康小叮嚀：</strong> 保持螢幕與眼睛相距 50 公分以上，背部挺直放鬆肩膀！
+      </div>
+    </div>
+
+    <!-- 右側：任務清單與數據累計 -->
+    <div class="card">
+      <h3 style="margin-bottom: 12px; font-size: 1.15rem;">🎯 今日專注任務目標</h3>
+      <div class="task-input-group">
+        <input type="text" id="taskInput" placeholder="輸入專注事項 (如：閱讀論文、作業撰寫)..." onkeypress="handleTaskKey(event)" />
+        <button class="btn btn-primary" onclick="addTask()">新增</button>
+      </div>
+      <ul class="task-list" id="taskList">
+        <li class="task-item"><span>🚀 完成生成式 AI 第五週作業</span></li>
+      </ul>
+
+      <hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;" />
+
+      <h3 style="margin-bottom: 10px; font-size: 1.15rem;">📊 今日成效累計</h3>
+      <div class="stats-row">
+        <div>
+          <div class="stat-number" id="pomoCount">0</div>
+          <div class="stat-label">完成番茄鐘數</div>
+        </div>
+        <div>
+          <div class="stat-number" id="focusTime">0</div>
+          <div class="stat-label">專注總分鐘</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 1. 常數與音訊合成設定 (免外部音效檔案，透過 Web Audio API 播聲音)
+    const WORK_TIME = 25 * 60;
+    const BREAK_TIME = 5 * 60;
+    const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 100; // 約 628.3
+
+    let currentMode = 'work'; // 'work' 或 'break'
+    let totalSeconds = WORK_TIME;
+    let remainingSeconds = WORK_TIME;
+    let timerInterval = null;
+    let isRunning = false;
+    let completedPomodoros = 0;
+
+    const healthTips = [
+      "💡 20-20-20 護眼原則：看著 20 呎（約 6 公尺）外物體放鬆 20 秒。",
+      "🧘 放鬆頸部：將頭緩慢向左右兩肩側靠，伸展緊繃斜方肌。",
+      "💧 水分補充：起身喝一杯溫開水，維持身體代謝循環！",
+      "🏃 伸展下背：站起來雙手上舉拉長脊椎，舒緩久坐壓力。"
+    ];
+
+    const ring = document.getElementById('progressRing');
+    const display = document.getElementById('timerDisplay');
+    const startBtn = document.getElementById('startBtn');
+    const tipBox = document.getElementById('healthTipBox');
+
+    // 2. 音效生成器 (Web Audio API)
+    function playBeep(freq = 600, duration = 0.25) {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.frequency.value = freq;
+        osc.start();
+        gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {
+        console.log("AudioContext 未啟用");
+      }
+    }
+
+    // 3. 計時與進度條控制
+    function updateDisplay() {
+      const minutes = Math.floor(remainingSeconds / 60);
+      const seconds = remainingSeconds % 60;
+      display.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      
+      const offset = CIRCLE_CIRCUMFERENCE - (remainingSeconds / totalSeconds) * CIRCLE_CIRCUMFERENCE;
+      ring.style.strokeDashoffset = offset;
+    }
+
+    function toggleTimer() {
+      if (isRunning) {
+        pauseTimer();
+      } else {
+        startTimer();
+      }
+    }
+
+    function startTimer() {
+      isRunning = true;
+      startBtn.textContent = '暫停計時';
+      startBtn.style.background = '#f59e0b';
+      
+      timerInterval = setInterval(() => {
+        if (remainingSeconds > 0) {
+          remainingSeconds--;
+          updateDisplay();
+        } else {
+          clearInterval(timerInterval);
+          isRunning = false;
+          playBeep(880, 0.4);
+          if (currentMode === 'work') {
+            completedPomodoros++;
+            document.getElementById('pomoCount').textContent = completedPomodoros;
+            document.getElementById('focusTime').textContent = completedPomodoros * 25;
+            alert("🎉 太棒了！專注時段結束，起身放鬆休息 5 分鐘吧！");
+            setMode('break');
+          } else {
+            alert("⏰ 休息結束，準備開始下一個高效專注階段！");
+            setMode('work');
+          }
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      clearInterval(timerInterval);
+      isRunning = false;
+      startBtn.textContent = '繼續計時';
+      startBtn.style.background = 'var(--accent)';
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      isRunning = false;
+      startBtn.textContent = '開始專注';
+      startBtn.style.background = 'var(--accent)';
+      remainingSeconds = totalSeconds;
+      updateDisplay();
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      clearInterval(timerInterval);
+      isRunning = false;
+      startBtn.textContent = '開始計時';
+      startBtn.style.background = 'var(--accent)';
+
+      const workBtn = document.getElementById('workModeBtn');
+      const breakBtn = document.getElementById('breakModeBtn');
+
+      if (mode === 'work') {
+        totalSeconds = WORK_TIME;
+        workBtn.classList.add('active');
+        breakBtn.classList.remove('active');
+        ring.style.stroke = 'var(--accent)';
+        tipBox.innerHTML = `💡 <strong>專注指南：</strong> 排除多餘分心雜念，一次只做好當前一件事。`;
+      } else {
+        totalSeconds = BREAK_TIME;
+        breakBtn.classList.add('active');
+        workBtn.classList.remove('active');
+        ring.style.stroke = 'var(--break-color)';
+        const randomTip = healthTips[Math.floor(Math.random() * healthTips.length)];
+        tipBox.innerHTML = randomTip;
+      }
+      remainingSeconds = totalSeconds;
+      updateDisplay();
+    }
+
+    // 4. 任務清單互動
+    function addTask() {
+      const input = document.getElementById('taskInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const list = document.getElementById('taskList');
+      const li = document.createElement('li');
+      li.className = 'task-item';
+      li.innerHTML = `<span>• ${text}</span> <button style="background:none; border:none; color:#ef4444; cursor:pointer;" onclick="this.parentElement.remove()">✕</button>`;
+      list.appendChild(li);
+      input.value = '';
+    }
+
+    function handleTaskKey(e) {
+      if (e.key === 'Enter') addTask();
+    }
+
+    // 初始化狀態
+    updateDisplay();
+  </script>
+</body>
+</html>
